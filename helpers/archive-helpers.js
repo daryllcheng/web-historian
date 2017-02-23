@@ -28,22 +28,53 @@ exports.initialize = function(pathsObj) {
 exports.readListOfUrls = function(callback) {
   fs.readFile(exports.paths.list, 'utf8', function(err, content) {
     // console.log('content', content);
-      if (err) {
-        callback(err, content);
-      } else {
-        callback(content.split('\n'));
-      }
-    });
+    if (err) {
+      callback(err, content);
+    } else {
+      callback(content.split('\n'));
+    }
+  });
 };
 
 exports.isUrlInList = function(url, callback) {
+  fs.readFile(exports.paths.list, 'utf8', function(err, content) {
+    // console.log('content', content);
+    if (err) {
+      callback(err, content);
+    } else {
+      callback((content.split('\n')).includes(url));
+    }
+  });
 };
 
 exports.addUrlToList = function(url, callback) {
+  fs.readFile(exports.paths.list, 'utf8', function(err, content) {
+    // console.log('content', content);
+    if (err) {
+      callback(err, content);
+    }
+    var body = content.split('\n');
+    body.pop();
+    body.push(url);
+    var newBody = body.join('\n');
+    // console.log(newBody);
+    // console.log(url);
+    callback(fs.writeFile(exports.paths.list, newBody));
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {
+  fs.exists(exports.paths.archivedSites.concat('/' + url), function(exist) {
+    callback(exist);
+  });
 };
 
 exports.downloadUrls = function(urls) {
+  for (let url of urls) {
+    fs.writeFile(exports.paths.archivedSites + '/' + url, 'so much fun');
+  }
 };
+
+
+
+

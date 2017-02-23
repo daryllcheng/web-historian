@@ -130,7 +130,7 @@ describe('archive helpers', function() {
 
       var counter = 0;
       var total = 2;
-
+      console.log(archive.paths.archivedSites);
       archive.isUrlArchived('www.example.com', function (exists) {
         expect(exists).to.be.true;
         if (++counter === total) { done(); }
