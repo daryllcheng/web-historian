@@ -2,6 +2,7 @@ var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var httpHelpers = require('./http-helpers');
 var fs = require('fs');
+var urlParser = require('url');
 // require more modules/folders here!
 
 // var headers = {
@@ -39,24 +40,34 @@ var sendRedirect = function(response, location, status) {
 
 var actions = {
   'GET': function(request, response) {
-    if (request.url === '/') {
-      fs.readFile(archive.paths.siteAssets + '/' + 'index.html', function(err, content) {
-        if (err) {
-          throw err; 
-        } else {
-          sendResponse(response, content.toString());
-        }
-      });
-    } else {
-      fs.readFile(archive.paths.archivedSites + '/' + request.url, function(err, content) {
-        if (err) {
-          sendResponse(response, null, 404);
-        } else {
-          sendResponse(response, content.toString());
-        }
-      });
-    }
+    var urlPath = urlParser.parse(request.url).pathname;
+    //this gives us only the "path" following the host name  ie: www.google.com(/search)... ?q=somethingyouwant
+    //                                                                             ^^^^ .pathname
+
+    if (urlPath === '/') { urlPath = '/index.html'; }
+
+    fs.readFile(archive.paths.siteAssets + urlPath, function(err, content) {
+      if (err) {
+        fs.readFile(archive.paths.archivedSites + urlPath, function(err, content) {
+          if (err) {
+            urlPath = urlPath.slice(1);
+            archive.isUrlInList(urlPath, function(exists) {
+              if (exists) {
+                sendRedirect(response, '/loading.html');
+              } else {
+                sendResponse(response, null, 404);
+              }
+            })
+          } else {
+            sendResponse(response, content);
+          }
+        })
+      } else {
+        sendResponse(response, content);
+      }
+    });
   },
+
   'POST': function(request, response) {
     collectData(request, function(data) {
       var url = data.split('=')[1].replace('http://', '');
@@ -81,7 +92,7 @@ var actions = {
   'OPTIONS': function(request, response) {
     sendResponse(response, null);
   }
-}
+};
 
 
 exports.handleRequest = function (request, response) {
